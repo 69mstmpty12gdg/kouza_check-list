@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="口座チェック">
+<meta name="theme-color" content="#f3f1ec" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14161a" media="(prefers-color-scheme: dark)">
+<title>証券口座 防衛チェック</title>
+<style>
+:root {
+  --bg: #f3f1ec;
+  --surface: #ffffff;
+  --ink: #1d2126;
+  --muted: #646b74;
+  --line: #e1ddd4;
+  --accent: #1f6b4f;
+  --accent-soft: #dcefe6;
+  --urgent: #b23a1e;
+  --urgent-soft: #fbe5de;
+  --note: #8a5a00;
+  --note-soft: #fbf0d6;
+  --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14161a; --surface: #1d2025; --ink: #e8eaed; --muted: #9aa1aa; --line: #2c3037;
+    --accent: #6fcf9f; --accent-soft: #1d3329; --urgent: #ff9b80; --urgent-soft: #3a211a;
+    --note: #f0c56b; --note-soft: #352b15; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14161a; --surface: #1d2025; --ink: #e8eaed; --muted: #9aa1aa; --line: #2c3037;
+  --accent: #6fcf9f; --accent-soft: #1d3329; --urgent: #ff9b80; --urgent-soft: #3a211a;
+  --note: #f0c56b; --note-soft: #352b15; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.6; -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+.wrap { max-width: 620px; margin: 0 auto; padding: 0 max(16px, env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+
+header.top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-top: env(safe-area-inset-top); border-bottom: 1px solid var(--line); }
+header.top .wrap { padding-top: 12px; padding-bottom: 12px; }
+h1 { font-size: 19px; line-height: 1.35; margin: 0 0 8px; letter-spacing: .01em; }
+.progress { display: flex; align-items: center; gap: 12px; }
+.bar { flex: 1; height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .25s ease; }
+.count { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--muted); white-space: nowrap; }
+
+.intro { margin: 18px 0 8px; background: var(--note-soft); border-radius: 14px; padding: 14px 16px; font-size: 14.5px; }
+.intro strong { color: var(--note); }
+.intro p { margin: 0 0 8px; }
+.intro p:last-child { margin: 0; }
+.src { font-size: 12.5px; color: var(--muted); margin: 6px 2px 0; }
+
+section { margin-top: 26px; }
+section > h2 { font-size: 16px; margin: 0 0 4px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+section > h2 .tag { font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); }
+section > h2 .tag.urgent { background: var(--urgent-soft); color: var(--urgent); }
+section > p.lead { margin: 0 0 10px; color: var(--muted); font-size: 14px; }
+
+ul.items { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.item { display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: start; width: 100%; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 14px 14px 14px 12px; font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; transition: background .15s, border-color .15s; }
+.item:active { transform: scale(.995); }
+.box { width: 28px; height: 28px; border-radius: 8px; border: 2px solid var(--muted); display: grid; place-items: center; margin-top: 1px; transition: background .15s, border-color .15s; }
+.box svg { width: 18px; height: 18px; stroke: var(--surface); stroke-width: 3.2; fill: none; opacity: 0; transition: opacity .12s; }
+.item[aria-checked="true"] { background: var(--accent-soft); border-color: transparent; }
+.item[aria-checked="true"] .box { background: var(--accent); border-color: var(--accent); }
+.item[aria-checked="true"] .box svg { opacity: 1; }
+.item[aria-checked="true"] .t { text-decoration: line-through; text-decoration-color: var(--muted); color: var(--muted); }
+.t { display: block; font-weight: 650; font-size: 15.5px; line-height: 1.45; }
+.how { display: block; margin-top: 4px; font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+.how b { color: var(--ink); font-weight: 600; }
+.warn { display: block; margin-top: 6px; font-size: 13px; color: var(--urgent); }
+
+.done { margin-top: 26px; padding: 16px; border-radius: 14px; background: var(--accent-soft); color: var(--accent); font-weight: 650; text-align: center; display: none; }
+.done.show { display: block; }
+
+.tools { margin-top: 30px; border-top: 1px solid var(--line); padding-top: 18px; display: grid; gap: 10px; }
+.tools h2 { font-size: 15px; margin: 0; }
+.tools p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.btn { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 13px 14px; font: inherit; font-weight: 600; font-size: 15px; text-align: center; cursor: pointer; touch-action: manipulation; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.btn.danger { color: var(--urgent); }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 99px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: calc(100% - 32px); text-align: center; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+footer { margin-top: 26px; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1>証券口座を乗っ取られないための<br>やることチェックリスト</h1>
+    <div class="progress" aria-live="polite">
+      <div class="bar"><i id="bar"></i></div>
+      <span class="count" id="count">0 / 0</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="intro">
+    <p><strong>まず落ち着いて：</strong>パスキーの仕組みが破られたわけではありません。狙われているのは、パスキーやパスワードを保管している<b>Apple・Googleのアカウント</b>のほうです。そこを乗っ取られると、保存されたパスキーごと使われてしまいます。</p>
+    <p>なのでやることは「Apple・Googleを固める」→「証券口座側でもう一重守る」→「パスワードの置き場所を片付ける」の順です。</p>
+    <p>項目をタップするとチェックが付きます（もう一度タップで外れます）。チェックはこのスマホの中だけに保存され、ほかの人とは連動しません。</p>
+  </div>
+  <p class="src">元にした動画：「【緊急】パスキーも突破される！SBI証券も警告…今すぐやるべき対策7選」（不苦労＠高配当株FIRE、2026年10月8日）と、SBI証券・SMBC日興証券の注意喚起（2026年10月）の報道内容。メニュー名はOSや各社の更新で変わることがあります。</p>
+
+  <div id="list"></div>
+
+  <div class="done" id="done">全部できました。おつかれさまでした 🎉</div>
+
+  <div class="tools">
+    <h2>家族・友人に配る</h2>
+    <p>このページのリンクを送ると、相手のスマホでは<b>まっさらな状態</b>から始まります。あなたのチェックは相手に伝わりません。</p>
+    <button class="btn primary" id="share" type="button">リンクを送る（LINE・AirDropなど）</button>
+    <p>iPhoneの「リマインダー」で使いたい場合：下のボタンで全項目をコピー → リマインダーで新規リストを作り、1件目に貼り付けると1行ずつ別々の項目になります。リストを「テンプレートとして保存」→「テンプレートを共有」でリンク配布もできます。</p>
+    <button class="btn" id="copy" type="button">全項目をテキストでコピー</button>
+    <p>ホーム画面に置くと、アプリのように開けます：Safariの共有ボタン →「ホーム画面に追加」。</p>
+    <button class="btn danger" id="reset" type="button">チェックをすべて外す</button>
+  </div>
+
+  <footer>個人の備忘用チェックリストです。最終的な設定方法は各社の公式ヘルプで確認してください。</footer>
+</main>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SECTIONS = [
+  {
+    title: "今日中にやる：だまされない準備",
+    tag: "最優先", urgent: true,
+    lead: "入口はほぼフィッシング（偽のSMS・メール・電話）です。",
+    items: [
+      ["sms",
+       "「パスキーを再登録して」系のSMS・メールのリンクは開かない",
+       "証券会社・Apple・Googleを名乗っていても無視。確認したいときは<b>自分でブックマークや公式アプリから</b>開く。"],
+      ["call",
+       "サポートを名乗る電話の指示でパスキー登録・コード読み上げをしない",
+       "本物のサポートが認証コードやパスキー登録を求めることはない、と覚えておく。"],
+      ["approve",
+       "身に覚えのないログイン通知・認証リクエストは「許可しない」",
+       "iPhoneに突然「サインインしようとしています」と出ても承認しない。出たらすぐパスワード変更。"],
+      ["family",
+       "このページを家族（妻・両親など）にも共有した",
+       "家族の誰か一人が乗っ取られても、共有しているiCloudや連絡先から芋づる式に狙われることがあります。"]
+    ]
+  },
+  {
+    title: "Appleアカウント（iPhone）を固める",
+    tag: "最優先", urgent: true,
+    lead: "iPhoneに保存したパスキー・パスワードは、すべてここに紐づいています。",
+    items: [
+      ["a-2fa",
+       "2ファクタ認証がオンになっているか確認",
+       "<b>設定 → 一番上の自分の名前 → サインインとセキュリティ</b>（iOSにより「パスワードとセキュリティ」）。"],
+      ["a-pass",
+       "Appleアカウントのパスワードを、他で使っていない長いものに変更",
+       "同じ画面の「パスワードを変更」。誕生日・電話番号・使い回しはNG。"],
+      ["a-phone",
+       "「信頼できる電話番号」が今の自分の番号だけか確認",
+       "同じ画面の「信頼できる電話番号」。昔の番号・知らない番号は削除。"],
+      ["a-devices",
+       "サインイン中のデバイス一覧に、見覚えのない端末がないか確認",
+       "<b>設定 → 自分の名前</b> → 下にスクロールしたデバイス一覧。知らない端末は「アカウントから削除」。"],
+      ["a-stolen",
+       "「盗難デバイスの保護」をオンにする",
+       "<b>設定 → Face IDとパスコード → 盗難デバイスの保護</b>。パスコードを盗み見されてもアカウントを奪われにくくなります。"],
+      ["a-code",
+       "iPhoneのパスコードを6桁以上（できれば英数字）にする",
+       "<b>設定 → Face IDとパスコード → パスコードを変更</b>。4桁・誕生日は避ける。"]
+    ]
+  },
+  {
+    title: "Googleアカウントを固める",
+    tag: "最優先", urgent: true,
+    lead: "Gmailやパスワードマネージャーを使っている人は必須。使っていなくても持っているなら確認。",
+    items: [
+      ["g-check",
+       "Googleの「セキュリティ診断」を実行し、出てきた警告をすべて解消",
+       "Googleアプリ or ブラウザで <b>myaccount.google.com</b> → セキュリティ → セキュリティ診断。"],
+      ["g-2sv",
+       "2段階認証プロセスをオン（SMSだけでなく、パスキーや認証システムアプリも追加）",
+       "<b>セキュリティ → 2段階認証プロセス</b>。SMSのみより強い方法を1つ足す。"],
+      ["g-recovery",
+       "再設定用の電話番号・メールアドレスが今の自分のものか確認",
+       "<b>セキュリティ → Googleがご本人確認に使用する情報</b>。古いメール・番号は削除。"],
+      ["g-devices",
+       "「お使いのデバイス」に見覚えのない端末がないか確認",
+       "<b>セキュリティ → お使いのデバイス</b>。知らない端末は「ログアウト」。"],
+      ["g-passkeys",
+       "「パスキーとセキュリティキー」に覚えのないものがないか確認",
+       "<b>セキュリティ → パスキーとセキュリティキー</b>。自分で作っていないものは削除。"]
+    ]
+  },
+  {
+    title: "証券口座側でもう一重守る（SBI証券）",
+    tag: "今週中",
+    lead: "Apple・Googleが突破されても、証券口座で止められるようにします。他の証券会社を使っている人は同等の設定を探してください。",
+    items: [
+      ["s-passkey",
+       "パスキーを設定済みか確認（まだなら設定）",
+       "SBI証券サイトにログイン → <b>セキュリティ設定</b>からパスキーを登録。"],
+      ["s-nopass",
+       "「ログインパスワード無効設定」を有効にする",
+       "パスキーでログインした状態で <b>セキュリティ設定 → ログインパスワード無効設定</b>。パスワードを盗まれてもログインできなくなります。"],
+      ["s-apptool",
+       "「アプリ・ツールのログイン制限設定」もかかっているか確認",
+       "パスワード無効設定をすると自動で制限されますが、念のため同じセキュリティ設定内で状態を確認。"],
+      ["s-notify",
+       "ログイン通知メールをオンにする",
+       "メール通知の設定で「ログイン通知」を有効化。身に覚えのない通知が来たらすぐ証券会社へ連絡。"],
+      ["s-contact",
+       "登録メールアドレス・電話番号が今使っているものか確認",
+       "認証や出金確認の連絡先になります。古いままだと異常に気づけません。"],
+      ["s-bank",
+       "出金先の銀行口座が自分の口座のままか確認",
+       "勝手に変えられていないか。口座情報・登録情報の画面で確認。"],
+      ["s-history",
+       "最近の取引履歴・ログイン履歴に覚えのないものがないか確認",
+       "知らない売買（特に急な売却や、聞いたことのない銘柄の購入）があれば即連絡。"],
+      ["s-others",
+       "他の証券口座（楽天証券・NISA口座など）も同じように設定",
+       "各社にパスキー、多要素認証、ログイン通知などの仕組みがあります。家族の口座も忘れずに。"]
+    ]
+  },
+  {
+    title: "パスワードの置き場所を片付ける",
+    tag: "今週中",
+    lead: "「クラウドに保存したパスワードのメモ」も悪用された、と報じられています。",
+    items: [
+      ["m-notes",
+       "メモアプリにパスワード・暗証番号・取引パスワードを書いていないか確認して削除",
+       "iCloudやGoogleに同期されたメモは、アカウントを乗っ取られると丸見えです。"],
+      ["m-photos",
+       "パスワードや口座情報のスクショ・写真を削除（「最近削除した項目」からも）",
+       "写真アプリで「パスワード」「暗証」などで検索すると見つけやすいです。"],
+      ["m-drive",
+       "iCloud Drive・Googleドライブにパスワード一覧のファイルがないか確認",
+       "Excelやテキストの一覧があれば削除。"],
+      ["m-reuse",
+       "パスワードアプリで使い回し・漏えいしたパスワードを変更",
+       "iPhoneの<b>「パスワード」アプリ → セキュリティ</b>の警告を確認。特に証券・銀行・メールは使い回しをやめる。"],
+      ["m-mail",
+       "証券口座に登録しているメールのアカウントも強くする",
+       "メールを乗っ取られるとパスワード再設定を通されます。そのメール側も2段階認証を。"]
+    ]
+  },
+  {
+    title: "余裕があれば（さらに強く）",
+    tag: "任意",
+    lead: "効果は大きいですが、管理を間違えると自分が締め出されることがあります。理解してから。",
+    items: [
+      ["x-reckey",
+       "Appleの「復旧キー」を作って紙で保管",
+       "<b>設定 → 自分の名前 → サインインとセキュリティ → アカウントの復旧（復旧キー）</b>。",
+       "注意：復旧キーをなくすとアカウントを取り戻せなくなる可能性があります。"],
+      ["x-seckey",
+       "物理セキュリティキー（YubiKeyなど）をApple・Googleに登録",
+       "Appleは2本以上の登録が必要。1本は自宅の安全な場所に保管。",
+       "注意：キーを全部なくすとログインが大変になります。"],
+      ["x-emergency",
+       "不正に気づいたときの連絡先（各証券会社の公式窓口）を控えておく",
+       "電話番号は検索広告ではなく、公式サイト・公式アプリから確認して控える。"]
+    ]
+  }
+];
+
+const KEY = "kouza-bouei-checklist-v1";
+const listEl = document.getElementById("list");
+const check = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { return {}; }
+}
+function save(state) {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+}
+let state = load();
+
+function render() {
+  listEl.innerHTML = SECTIONS.map(sec => `
+    <section>
+      <h2>${sec.title}<span class="tag${sec.urgent ? " urgent" : ""}">${sec.tag}</span></h2>
+      <p class="lead">${sec.lead}</p>
+      <ul class="items">
+        ${sec.items.map(([id, t, how, warn]) => `
+          <li><button type="button" class="item" role="checkbox" data-id="${id}" aria-checked="${state[id] ? "true" : "false"}">
+            <span class="box">${check}</span>
+            <span><span class="t">${t}</span><span class="how">${how}</span>${warn ? `<span class="warn">${warn}</span>` : ""}</span>
+          </button></li>`).join("")}
+      </ul>
+    </section>`).join("");
+  updateProgress();
+}
+
+function updateProgress() {
+  const all = SECTIONS.flatMap(s => s.items.map(i => i[0]));
+  const n = all.filter(id => state[id]).length;
+  document.getElementById("count").textContent = `${n} / ${all.length}`;
+  document.getElementById("bar").style.width = (all.length ? n / all.length * 100 : 0) + "%";
+  document.getElementById("done").classList.toggle("show", n === all.length);
+}
+
+listEl.addEventListener("click", e => {
+  const btn = e.target.closest(".item");
+  if (!btn) return;
+  const id = btn.dataset.id;
+  state[id] = !state[id];
+  if (!state[id]) delete state[id];
+  save(state);
+  btn.setAttribute("aria-checked", state[id] ? "true" : "false");
+  if (navigator.vibrate) navigator.vibrate(8);
+  updateProgress();
+});
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
+}
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch (e) {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch (e2) {}
+    ta.remove();
+    return ok;
+  }
+}
+
+document.getElementById("share").addEventListener("click", async () => {
+  const url = location.href.split("#")[0];
+  const data = { title: "証券口座 防衛チェック", text: "証券口座の乗っ取り対策チェックリスト。タップでチェックできます。", url };
+  if (navigator.share) {
+    try { await navigator.share(data); } catch (e) {}
+  } else if (await copyText(url)) {
+    toast("リンクをコピーしました");
+  }
+});
+
+document.getElementById("copy").addEventListener("click", async () => {
+  const text = SECTIONS.flatMap(s => s.items.map(i => i[1])).join("\n");
+  toast(await copyText(text) ? "全項目をコピーしました" : "コピーできませんでした");
+});
+
+document.getElementById("reset").addEventListener("click", () => {
+  if (!confirm("このスマホのチェックをすべて外しますか？")) return;
+  state = {};
+  save(state);
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
